@@ -4,7 +4,8 @@ import { OLLAMA_BASE_URL } from "../config";
 
 // Configure Ollama with Ngrok endpoint
 const ollama = createOllama({
-    baseURL: OLLAMA_BASE_URL
+    baseURL: OLLAMA_BASE_URL,
+    headers: { 'bypass-tunnel-reminder': 'true' }
 });
 
 export interface OrchestratorResponse {
@@ -51,7 +52,8 @@ export async function orchestrateRequest(userMessage: string, ollamaUrl?: string
     try {
         // Create Ollama instance with provided URL or fallback to config
         const ollama = createOllama({
-            baseURL: ollamaUrl || OLLAMA_BASE_URL
+            baseURL: ollamaUrl || OLLAMA_BASE_URL,
+            headers: { 'bypass-tunnel-reminder': 'true' }
         });
 
         const { text } = await generateText({
@@ -64,7 +66,7 @@ export async function orchestrateRequest(userMessage: string, ollamaUrl?: string
 
         // Parse the JSON response
         const response = JSON.parse(text.trim());
-        
+
         // Validate response structure
         if (!response.intent || !response.agent || !response.reasoning || !response.processedMessage) {
             throw new Error('Invalid orchestrator response structure');
@@ -73,22 +75,22 @@ export async function orchestrateRequest(userMessage: string, ollamaUrl?: string
         return response as OrchestratorResponse;
     } catch (error) {
         console.error('Orchestrator error:', error);
-        
+
         // Fallback classification
         const lowerMessage = userMessage.toLowerCase();
         let intent: 'transaction' | 'advice' | 'data' | 'unknown' = 'unknown';
         let agent: 'backend' | 'advisor' | 'both' = 'backend';
 
-        if (lowerMessage.includes('add') || lowerMessage.includes('spent') || lowerMessage.includes('paid') || 
+        if (lowerMessage.includes('add') || lowerMessage.includes('spent') || lowerMessage.includes('paid') ||
             lowerMessage.includes('delete') || lowerMessage.includes('update')) {
             intent = 'transaction';
             agent = 'backend';
-        } else if (lowerMessage.includes('can i afford') || lowerMessage.includes('should i') || 
-                   lowerMessage.includes('recommend') || lowerMessage.includes('advice')) {
+        } else if (lowerMessage.includes('can i afford') || lowerMessage.includes('should i') ||
+            lowerMessage.includes('recommend') || lowerMessage.includes('advice')) {
             intent = 'advice';
             agent = 'both';
-        } else if (lowerMessage.includes('balance') || lowerMessage.includes('show') || 
-                   lowerMessage.includes('what\'s my') || lowerMessage.includes('summary')) {
+        } else if (lowerMessage.includes('balance') || lowerMessage.includes('show') ||
+            lowerMessage.includes('what\'s my') || lowerMessage.includes('summary')) {
             intent = 'data';
             agent = 'backend';
         }

@@ -5,7 +5,8 @@ import { OLLAMA_BASE_URL } from "../config";
 
 // Configure Ollama with Ngrok endpoint
 const ollama = createOllama({
-    baseURL: OLLAMA_BASE_URL
+    baseURL: OLLAMA_BASE_URL,
+    headers: { 'bypass-tunnel-reminder': 'true' }
 });
 
 export interface BackendResponse {
@@ -44,18 +45,19 @@ Do not analyze the data or provide recommendations. Stick to the facts.
 `;
 
 export async function executeBackendOperation(
-    userMessage: string, 
+    userMessage: string,
     userId: string,
     ollamaUrl?: string
 ): Promise<BackendResponse> {
     try {
         // Create Ollama instance with provided URL or fallback to config
         const ollama = createOllama({
-            baseURL: ollamaUrl || OLLAMA_BASE_URL
+            baseURL: ollamaUrl || OLLAMA_BASE_URL,
+            headers: { 'bypass-tunnel-reminder': 'true' }
         });
 
         const messageWithUserId = `User ID: ${userId}\n\nUser Request: ${userMessage}`;
-        
+
         const { text, toolResults } = await generateText({
             // @ts-expect-error: provider model version mismatch between ai sdk and ollama provider
             model: ollama('llama3.1:latest'),

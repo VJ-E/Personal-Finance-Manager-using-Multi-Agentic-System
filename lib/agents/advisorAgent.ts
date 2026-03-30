@@ -4,7 +4,8 @@ import { OLLAMA_BASE_URL } from "../config";
 
 // Configure Ollama with Ngrok endpoint
 const ollama = createOllama({
-    baseURL: OLLAMA_BASE_URL
+    baseURL: OLLAMA_BASE_URL,
+    headers: { 'bypass-tunnel-reminder': 'true' }
 });
 
 export interface AdvisorResponse {
@@ -57,7 +58,8 @@ export async function provideFinancialAdvice(
     try {
         // Create Ollama instance with provided URL or fallback to config
         const ollama = createOllama({
-            baseURL: ollamaUrl || OLLAMA_BASE_URL
+            baseURL: ollamaUrl || OLLAMA_BASE_URL,
+            headers: { 'bypass-tunnel-reminder': 'true' }
         });
 
         // Prepare context with financial data
