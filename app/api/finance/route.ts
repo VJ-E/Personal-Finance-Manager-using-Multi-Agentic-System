@@ -9,7 +9,7 @@ export async function GET() {
         // Fetch the user's live profile and recent transactions natively from Mongoose
         const financeData = await getFinancialSummary(MOCK_USER_ID);
 
-        if (!financeData.success) {
+        if (financeData.success === false) {
             return NextResponse.json({ error: financeData.message }, { status: 404 });
         }
 

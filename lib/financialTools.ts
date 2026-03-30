@@ -53,7 +53,10 @@ export async function addTransaction(userId: string, description: string, amount
 /**
  * Fetches the user's financial profile and recent transactions.
  */
-export async function getFinancialSummary(userId: string) {
+export async function getFinancialSummary(userId: string): Promise<
+    { success: true; data: { profile: { userId: string; monthlyIncome: number; totalBalance: number; activeSavingsGoals: any[] }; recentTransactions: any[] } }
+    | { success: false; message: string }
+> {
     await connectDB();
 
     const profile = await UserProfile.findOne({ userId });
