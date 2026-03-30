@@ -63,7 +63,18 @@ export async function provideFinancialAdvice(
         });
 
         // Prepare context with financial data
-        const contextMessage = `
+        let contextMessage;
+        
+        if (!financialData || (typeof financialData === 'object' && Object.keys(financialData).length === 0)) {
+            contextMessage = `
+User Question: ${userMessage}
+
+Current Financial Data: No financial data available.
+
+Note: The user has no financial data in the system. Please provide general financial guidance and suggest they add their financial information first.
+`;
+        } else {
+            contextMessage = `
 User Question: ${userMessage}
 
 Current Financial Data:
@@ -71,6 +82,7 @@ ${JSON.stringify(financialData, null, 2)}
 
 Please provide financial advice based on this data.
 `;
+        }
 
         const { text } = await generateText({
             // @ts-expect-error: provider model version mismatch between ai sdk and ollama provider

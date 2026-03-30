@@ -34,12 +34,15 @@ CRITICAL RULES:
 
 IMPORTANT: Always use the User ID provided in the message when calling any tool. Do not invent or guess user IDs.
 
+TOOL USAGE RULES:
+- For ANY request about financial data, summary, balance, or information, you MUST call the get_financial_data tool
+- Do NOT explain what you're doing - just use the tools directly
+- Do NOT format the response as natural language - let the tool results speak for themselves
+- The system will handle formatting the response for you
+- When you get tool results, just return them directly without additional commentary
+
 RESPONSE FORMAT:
-Provide clear, factual responses about:
-- What data was retrieved
-- What transactions were executed
-- Current balances or goal statuses
-- Any errors or confirmations
+Return the tool results directly without additional formatting or explanation.
 
 Do not analyze the data or provide recommendations. Stick to the facts.
 `;
@@ -56,7 +59,11 @@ export async function executeBackendOperation(
             headers: { 'bypass-tunnel-reminder': 'true' }
         });
 
-        const messageWithUserId = `User ID: ${userId}\n\nUser Request: ${userMessage}`;
+        const messageWithUserId = `User ID: ${userId}
+
+INSTRUCTION: Use the get_financial_data tool to retrieve this user's financial information.
+
+User Request: ${userMessage}`;
 
         const { text, toolResults } = await generateText({
             // @ts-expect-error: provider model version mismatch between ai sdk and ollama provider
@@ -66,6 +73,9 @@ export async function executeBackendOperation(
             tools: agentTools,
             maxSteps: 5,
         });
+
+        console.log('Backend agent tool results:', toolResults);
+        console.log('Backend agent text response:', text);
 
         return {
             success: true,

@@ -54,7 +54,7 @@ export async function addTransaction(userId: string, description: string, amount
  * Fetches the user's financial profile and recent transactions.
  */
 export async function getFinancialSummary(userId: string): Promise<
-    { success: true; data: { profile: { userId: string; monthlyIncome: number; totalBalance: number; activeSavingsGoals: any[] }; recentTransactions: any[] } }
+    { success: true; data: { profile: { userId: string; monthlyIncome: number; totalBalance: number; totalIncome: number; totalExpenses: number; activeSavingsGoals: any[] }; recentTransactions: any[] } }
     | { success: false; message: string }
 > {
     await connectDB();
@@ -70,6 +70,8 @@ export async function getFinancialSummary(userId: string): Promise<
                     userId,
                     monthlyIncome: 0,
                     totalBalance: 0,
+                    totalIncome: 0,
+                    totalExpenses: 0,
                     activeSavingsGoals: []
                 },
                 recentTransactions: []
@@ -82,6 +84,19 @@ export async function getFinancialSummary(userId: string): Promise<
         .sort({ date: -1 }) // Newest first
         .limit(50);
 
+    // Calculate actual income and expenses from transactions
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    recentTransactions.forEach(transaction => {
+        if (transaction.category === 'Income') {
+            totalIncome += transaction.amount;
+        } else {
+            // Fixed and Variable are expenses
+            totalExpenses += transaction.amount;
+        }
+    });
+
     return {
         success: true,
         data: {
@@ -89,6 +104,8 @@ export async function getFinancialSummary(userId: string): Promise<
                 userId: profile.userId,
                 monthlyIncome: profile.monthlyIncome,
                 totalBalance: profile.totalBalance,
+                totalIncome: totalIncome,
+                totalExpenses: totalExpenses,
                 activeSavingsGoals: profile.activeSavingsGoals
             },
             recentTransactions

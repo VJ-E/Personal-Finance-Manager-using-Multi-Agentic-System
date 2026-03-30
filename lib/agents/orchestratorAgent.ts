@@ -10,7 +10,7 @@ const ollama = createOllama({
 
 export interface OrchestratorResponse {
     intent: 'transaction' | 'advice' | 'data' | 'unknown';
-    agent: 'backend' | 'advisor' | 'both';
+    agent: 'backend' | 'both';
     reasoning: string;
     processedMessage: string;
 }
@@ -24,23 +24,24 @@ CLASSIFICATION RULES:
    - Examples: "I spent $50 on groceries", "Delete transaction #A7F2", "Update my salary"
 
 2. ADVICE INTENT: User seeks financial guidance, recommendations, or affordability analysis
-   - Keywords: "can I afford", "should I", "recommend", "advice", "help me decide", "is it worth"
-   - Examples: "Can I afford a new laptop?", "Should I invest in stocks?", "Is this purchase wise?"
+   - Keywords: "can I afford", "should I", "recommend", "advice", "help me decide", "is it worth", "buy", "purchase"
+   - Examples: "Can I afford a new laptop?", "Should I invest in stocks?", "Is this purchase wise?", "Can I buy shoes for $1000?"
 
 3. DATA INTENT: User wants to view or query their financial information
    - Keywords: "show me", "what's my", "balance", "summary", "history", "transactions", "goals"
    - Examples: "What's my current balance?", "Show me recent transactions", "How are my savings goals?"
 
 ROUTING LOGIC:
-- TRANSACTION intent → route to Backend Operations Agent only
-- ADVICE intent → route to Backend Operations Agent (for data) → then Advisor Agent
-- DATA intent → route to Backend Operations Agent only
+- TRANSACTION intent → route to Backend Operations Agent only (agent: "backend")
+- ADVICE intent → route to Backend Operations Agent (for data) → then Advisor Agent (agent: "both")
+- DATA intent → route to Backend Operations Agent only (agent: "backend")
+
+CRITICAL: You must respond with ONLY a JSON object. No markdown, no explanations, no code blocks. Just raw JSON.
 
 RESPONSE FORMAT:
-You must respond with a JSON object containing:
 {
   "intent": "transaction|advice|data|unknown",
-  "agent": "backend|advisor|both", 
+  "agent": "backend|both", 
   "reasoning": "Brief explanation of your classification",
   "processedMessage": "The user's message, potentially clarified or rephrased for the target agent"
 }
@@ -64,8 +65,20 @@ export async function orchestrateRequest(userMessage: string, ollamaUrl?: string
             maxSteps: 1,
         });
 
-        // Parse the JSON response
-        const response = JSON.parse(text.trim());
+        // Parse the JSON response (handle markdown code blocks)
+        let jsonText = text.trim();
+        
+        // Remove markdown code blocks if present
+        if (jsonText.startsWith('```json')) {
+            jsonText = jsonText.replace(/```json\n?/, '').replace(/```\n?$/, '');
+        } else if (jsonText.startsWith('```')) {
+            jsonText = jsonText.replace(/```\n?/, '').replace(/```\n?$/, '');
+        }
+        
+        // Clean up any extra whitespace
+        jsonText = jsonText.trim();
+        
+        const response = JSON.parse(jsonText);
 
         // Validate response structure
         if (!response.intent || !response.agent || !response.reasoning || !response.processedMessage) {
@@ -79,14 +92,15 @@ export async function orchestrateRequest(userMessage: string, ollamaUrl?: string
         // Fallback classification
         const lowerMessage = userMessage.toLowerCase();
         let intent: 'transaction' | 'advice' | 'data' | 'unknown' = 'unknown';
-        let agent: 'backend' | 'advisor' | 'both' = 'backend';
+        let agent: 'backend' | 'both' = 'backend';
 
         if (lowerMessage.includes('add') || lowerMessage.includes('spent') || lowerMessage.includes('paid') ||
             lowerMessage.includes('delete') || lowerMessage.includes('update')) {
             intent = 'transaction';
             agent = 'backend';
         } else if (lowerMessage.includes('can i afford') || lowerMessage.includes('should i') ||
-            lowerMessage.includes('recommend') || lowerMessage.includes('advice')) {
+            lowerMessage.includes('recommend') || lowerMessage.includes('advice') || 
+            lowerMessage.includes('buy') || lowerMessage.includes('purchase')) {
             intent = 'advice';
             agent = 'both';
         } else if (lowerMessage.includes('balance') || lowerMessage.includes('show') ||

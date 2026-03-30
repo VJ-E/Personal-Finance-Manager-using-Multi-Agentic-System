@@ -14,6 +14,8 @@ const fallbackSummaryData = {
     income: 0,
     expenses: 0,
     balance: 0,
+    totalIncome: 0,
+    totalExpenses: 0,
 };
 
 const defaultTopSpending = [
@@ -46,9 +48,11 @@ export default function Home() {
 
             if (data.profile) {
                 setSummaryData({
-                    income: data.profile.monthlyIncome,
-                    expenses: data.profile.totalBalance < 0 ? Math.abs(data.profile.totalBalance) : 0, // Simplified for MVP
+                    income: data.profile.totalIncome || data.profile.monthlyIncome || 0,
+                    expenses: data.profile.totalExpenses || 0,
                     balance: data.profile.totalBalance,
+                    totalIncome: data.profile.totalIncome || data.profile.monthlyIncome || 0,
+                    totalExpenses: data.profile.totalExpenses || 0,
                 });
 
                 if (data.profile.activeSavingsGoals) {
@@ -73,8 +77,47 @@ export default function Home() {
                 }));
                 setExpensesBarData(formattedBarData);
 
+                // Generate cash flow data from transactions
+                const cashFlowByMonth: { [key: string]: { income: number; expenses: number; net: number; date: Date } } = {};
+                
+                data.recentTransactions.forEach((transaction: any) => {
+                    const date = new Date(transaction.date);
+                    const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    
+                    if (!cashFlowByMonth[monthKey]) {
+                        cashFlowByMonth[monthKey] = { income: 0, expenses: 0, net: 0, date: date };
+                    }
+                    
+                    if (transaction.category === 'Income') {
+                        cashFlowByMonth[monthKey].income += transaction.amount;
+                        cashFlowByMonth[monthKey].net += transaction.amount;
+                    } else {
+                        cashFlowByMonth[monthKey].expenses += transaction.amount;
+                        cashFlowByMonth[monthKey].net -= transaction.amount;
+                    }
+                });
+                
+                // Convert to array format for Recharts
+                const cashFlowArray = Object.entries(cashFlowByMonth)
+                    .map(([month, data]) => ({
+                        month,
+                        cashflow: data.net // Use net cash flow for the chart
+                    }))
+                    .sort((a, b) => {
+                        // Sort by date using the stored date object
+                        const dateA = cashFlowByMonth[a.month].date;
+                        const dateB = cashFlowByMonth[b.month].date;
+                        return dateA.getTime() - dateB.getTime();
+                    });
+                
+                setCashFlowData(cashFlowArray);
+                console.log('Generated cash flow data:', cashFlowArray);
+
                 // Store raw transactions for the ledger
                 setRecentLedgerData(data.recentTransactions);
+            } else {
+                // Set default empty cash flow data when no transactions
+                setCashFlowData([]);
             }
         } catch (error) {
             console.error(error);
