@@ -28,6 +28,7 @@ export default function Home() {
     const [isLoading, setIsLoading] = useState(false);
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [ollamaUrl, setOllamaUrl] = useState("https://f6bbac8954c74a.lhr.life/api");
 
     // Dynamic State mapped to Backend
     const [summaryData, setSummaryData] = useState(fallbackSummaryData);
@@ -102,7 +103,10 @@ export default function Home() {
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: newMessages }),
+                body: JSON.stringify({ 
+                    messages: newMessages,
+                    ollamaUrl: ollamaUrl 
+                }),
             });
 
             if (!response.ok) throw new Error("Agent failed to respond.");
@@ -148,13 +152,26 @@ export default function Home() {
                             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-2">My Dashboard</h1>
                             <p className="border-2 border-black inline-block px-2 py-1 font-bold text-sm bg-black text-white">AGENT ACTIVE</p>
                         </div>
-                        <div className="mt-4 md:mt-0 flex gap-4">
-                            <button className="brutalist-button flex items-center gap-2">
-                                <Send className="w-5 h-5" /> Send Money
-                            </button>
-                            <button className="brutalist-button flex items-center gap-2">
-                                <Plus className="w-5 h-5" /> Add Funds
-                            </button>
+                        <div className="mt-4 md:mt-0 flex flex-col gap-4">
+                            {/* Ollama URL Input */}
+                            <div className="flex items-center gap-2">
+                                <label className="font-bold text-sm uppercase">Ollama URL:</label>
+                                <input
+                                    type="text"
+                                    value={ollamaUrl}
+                                    onChange={(e) => setOllamaUrl(e.target.value)}
+                                    placeholder="https://your-ngrok-url.ngrok.io/api"
+                                    className="border-2 border-black px-3 py-2 font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            </div>
+                            <div className="flex gap-4">
+                                <button className="brutalist-button flex items-center gap-2">
+                                    <Send className="w-5 h-5" /> Send Money
+                                </button>
+                                <button className="brutalist-button flex items-center gap-2">
+                                    <Plus className="w-5 h-5" /> Add Funds
+                                </button>
+                            </div>
                         </div>
                     </header>
 
