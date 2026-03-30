@@ -32,6 +32,19 @@ export default function Home() {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [ollamaUrl, setOllamaUrl] = useState("https://f6bbac8954c74a.lhr.life/api");
 
+    // Lock body scroll when chat is open on mobile
+    useEffect(() => {
+        if (isChatOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isChatOpen]);
+
     // Dynamic State mapped to Backend
     const [summaryData, setSummaryData] = useState(fallbackSummaryData);
     const [topSpendingData, setTopSpendingData] = useState(defaultTopSpending);
@@ -413,11 +426,19 @@ export default function Home() {
             </main>
 
             {/* AI CHAT AREA - Responsive Sidecar */}
-            <section className={`h-full border-l-[4px] border-black bg-white flex flex-col font-mono relative z-20 transition-all duration-300 ${isChatOpen ? 'w-[30%] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
+            <section className={`h-full border-l-[4px] md:border-l-[4px] border-black bg-white flex flex-col font-mono fixed md:relative z-[60] transition-all duration-300 ${isChatOpen ? 'inset-0 w-full md:w-[30%] md:inset-auto border-l-0 md:border-l-4 opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
                 {/* Header */}
-                <div className="bg-black text-white border-b-[4px] border-black px-6 py-4 font-bold text-sm uppercase flex items-center gap-2">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    System // Terminal
+                <div className="bg-black text-white border-b-[4px] border-black px-6 py-4 font-bold text-sm uppercase flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        System // Terminal
+                    </div>
+                    <button 
+                        onClick={() => setIsChatOpen(false)}
+                        className="md:hidden w-8 h-8 border-2 border-white bg-transparent hover:bg-white hover:text-black transition-colors flex items-center justify-center font-black"
+                    >
+                        ×
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto mb-4 p-4 space-y-4 custom-scrollbar text-black">
@@ -480,7 +501,7 @@ export default function Home() {
             {/* Floating Action Button (Orb) */}
             <button
                 onClick={() => setIsChatOpen(!isChatOpen)}
-                className={`fixed bottom-8 right-8 w-16 h-16 rounded-full border-[4px] border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFDE00] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all z-50 flex items-center justify-center ${isChatOpen ? 'bg-[#FFDE00]' : ''}`}
+                className={`fixed bottom-8 right-8 w-16 h-16 rounded-full border-[4px] border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFDE00] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all z-40 flex items-center justify-center ${isChatOpen ? 'bg-[#FFDE00] md:bg-[#FFDE00]' : ''} ${isChatOpen ? 'hidden md:flex' : 'flex'}`}
             >
                 <MessageSquare className="w-7 h-7" />
             </button>
